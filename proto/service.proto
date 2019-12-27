@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ai.metathings.component.service.joker;
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+message UploadFileRequest {
+	google.protobuf.BoolValue streaming = 1;
+	google.protobuf.StringValue source = 2;
+	google.protobuf.StringValue destination = 3;
+}
+
+message DownloadFileRequest {
+	google.protobuf.BoolValue streaming = 1;
+	google.protobuf.StringValue source = 2;
+	google.protobuf.StringValue destination = 3;
+}
+
+service JokerService {
+	rpc UploadFile(UploadFileRequest) returns (google.protobuf.Empty) {}
+	rpc DownloadFile(DownloadFileRequest) returns (google.protobuf.Empty) {}
+}

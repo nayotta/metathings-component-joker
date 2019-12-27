@@ -1,0 +1,23 @@
+debug:
+  name: joker  # module name
+  service:
+    scheme: mtp+grpc
+    host: 0.0.0.0
+    port: 13404
+  log:
+    level: debug
+  heartbeat:
+    interval: 15
+  credential:
+    id: <credential-id>
+    secret: <credential-secret>
+    domain: <credential-domain>
+  transport_credential:
+    plain_text: true
+  service_endpoint:
+    device:
+      address: <device-address>
+      plain_text: true
+    default:
+      address: <metathings-address>
+      # ...
