@@ -18,7 +18,7 @@ import (
 	pb "github.com/nayotta/metathings-component-joker/proto"
 )
 
-type UploadOption struct {
+type ObjectUploadOption struct {
 	cmd_contrib.ClientBaseOption `mapstructure:",squash"`
 	Device                       string
 	Module                       string
@@ -27,48 +27,48 @@ type UploadOption struct {
 	Streaming                    bool
 }
 
-func NewUploadOption() *UploadOption {
-	return &UploadOption{
+func NewObjectUploadOption() *ObjectUploadOption {
+	return &ObjectUploadOption{
 		ClientBaseOption: cmd_contrib.CreateClientBaseOption(),
 	}
 }
 
 var (
-	upload_opt *UploadOption
+	object_upload_opt *ObjectUploadOption
 )
 
 var (
-	UploadCmd = &cobra.Command{
+	objectUploadCmd = &cobra.Command{
 		Use:     "upload",
 		Short:   "upload file form module to simple storage",
 		Aliases: []string{"u"},
 		PreRun: cmd_helper.DefaultPreRunHooks(func() {
 			if base_opt.Config == "" {
-				upload_opt.BaseOption = *base_opt
+				object_upload_opt.BaseOption = *base_opt
 			} else {
-				cmd_helper.UnmarshalConfig(upload_opt)
-				base_opt = &upload_opt.BaseOption
+				cmd_helper.UnmarshalConfig(object_upload_opt)
+				base_opt = &object_upload_opt.BaseOption
 			}
 
-			if upload_opt.Token == "" {
-				upload_opt.Token = cmd_helper.GetTokenFromEnv()
+			if object_upload_opt.Token == "" {
+				object_upload_opt.Token = cmd_helper.GetTokenFromEnv()
 			}
 		}),
-		RunE: upload,
+		RunE: object_upload,
 	}
 )
 
 func GetUploadOptions() (
-	*UploadOption,
+	*ObjectUploadOption,
 	cmd_contrib.ServiceEndpointsOptioner,
 	cmd_contrib.LoggerOptioner,
 ) {
-	return upload_opt,
-		cmd_contrib.NewServiceEndpointsOptionWithTransportCredentialOption(upload_opt, upload_opt),
-		upload_opt
+	return object_upload_opt,
+		cmd_contrib.NewServiceEndpointsOptionWithTransportCredentialOption(object_upload_opt, object_upload_opt),
+		object_upload_opt
 }
 
-func upload(cmd *cobra.Command, args []string) error {
+func object_upload(cmd *cobra.Command, args []string) error {
 	app := fx.New(
 		fx.NopLogger,
 		fx.Provide(
@@ -76,7 +76,7 @@ func upload(cmd *cobra.Command, args []string) error {
 			cmd_contrib.NewLogger("upload"),
 			cmd_contrib.NewClientFactory,
 		),
-		fx.Invoke(func(lc fx.Lifecycle, logger log.FieldLogger, opt *UploadOption, cli_fty *client_helper.ClientFactory) {
+		fx.Invoke(func(lc fx.Lifecycle, logger log.FieldLogger, opt *ObjectUploadOption, cli_fty *client_helper.ClientFactory) {
 			lc.Append(fx.Hook{OnStart: func(context.Context) error {
 				cli, cfn, err := cli_fty.NewDevicedServiceClient()
 				if err != nil {
@@ -84,12 +84,12 @@ func upload(cmd *cobra.Command, args []string) error {
 				}
 				defer cfn()
 
-				ctx := context_helper.WithToken(context.TODO(), upload_opt.GetToken())
+				ctx := context_helper.WithToken(context.TODO(), object_upload_opt.GetToken())
 
 				req := pb.UploadFileRequest{
-					Streaming:   &wrappers.BoolValue{Value: upload_opt.Streaming},
-					Source:      &wrappers.StringValue{Value: upload_opt.Source},
-					Destination: &wrappers.StringValue{Value: upload_opt.Destination},
+					Streaming:   &wrappers.BoolValue{Value: object_upload_opt.Streaming},
+					Source:      &wrappers.StringValue{Value: object_upload_opt.Source},
+					Destination: &wrappers.StringValue{Value: object_upload_opt.Destination},
 				}
 				req_any, err := ptypes.MarshalAny(&req)
 				if err != nil {
@@ -98,10 +98,10 @@ func upload(cmd *cobra.Command, args []string) error {
 
 				rreq := &deviced_pb.UnaryCallRequest{
 					Device: &deviced_pb.OpDevice{
-						Id: &wrappers.StringValue{Value: upload_opt.Device},
+						Id: &wrappers.StringValue{Value: object_upload_opt.Device},
 					},
 					Value: &deviced_pb.OpUnaryCallValue{
-						Name:   &wrappers.StringValue{Value: upload_opt.Module},
+						Name:   &wrappers.StringValue{Value: object_upload_opt.Module},
 						Method: &wrappers.StringValue{Value: "UploadFile"},
 						Value:  req_any,
 					},
@@ -113,8 +113,8 @@ func upload(cmd *cobra.Command, args []string) error {
 				}
 
 				logger.WithFields(log.Fields{
-					"source":      upload_opt.Source,
-					"destination": upload_opt.Destination,
+					"source":      object_upload_opt.Source,
+					"destination": object_upload_opt.Destination,
 				}).Infof("upload file")
 
 				return nil
@@ -133,15 +133,15 @@ func upload(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	upload_opt = NewUploadOption()
+	object_upload_opt = NewObjectUploadOption()
 
-	flags := UploadCmd.Flags()
+	flags := objectUploadCmd.Flags()
 
-	flags.StringVar(&upload_opt.Device, "device", "", "Device ID")
-	flags.StringVar(&upload_opt.Module, "module", "", "Module Name")
-	flags.StringVarP(&upload_opt.Source, "source", "s", "", "Upload Source File to Storage")
-	flags.StringVarP(&upload_opt.Destination, "destination", "d", "", "File will save in destination")
-	flags.BoolVar(&upload_opt.Streaming, "streaming", true, "Upload File in streaming mode")
+	flags.StringVar(&object_upload_opt.Device, "device", "", "Device ID")
+	flags.StringVar(&object_upload_opt.Module, "module", "", "Module Name")
+	flags.StringVarP(&object_upload_opt.Source, "source", "s", "", "Upload Source File to Storage")
+	flags.StringVarP(&object_upload_opt.Destination, "destination", "d", "", "File will save in destination")
+	flags.BoolVar(&object_upload_opt.Streaming, "streaming", true, "Upload File in streaming mode")
 
-	RootCmd.AddCommand(UploadCmd)
+	ObjectCmd.AddCommand(objectUploadCmd)
 }

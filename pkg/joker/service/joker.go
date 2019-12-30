@@ -41,11 +41,7 @@ func (js *JokerService) upload_file_streaming(ctx context.Context, req *pb.Uploa
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	cancel, errs, err := js.module.PutObjectStreamingWithCancel(dst, src_rd, opt)
-	if err != nil {
-
-	}
-
+	err = js.module.PutObjectStreaming(dst, src_rd, opt)
 	if err != nil && err != io.EOF {
 		js.get_logger().WithFields(log.Fields{
 			"source":      src,
